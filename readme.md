@@ -88,4 +88,4 @@ python scripts/notify_email.py
 
 ## Video
 
-(Link do YouTube aqui)
+https://youtu.be/FnfnLK7I71w
