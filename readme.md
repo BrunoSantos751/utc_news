@@ -1,66 +1,91 @@
-# 🌍 UTC News System
+# UTC News System
 
-## 📌 Descrição
+## Descricao
 
-Sistema desenvolvido em PostgreSQL para geração automatizada de relatórios sobre fusos horários (UTCs), incluindo previsão do tempo e informações geográficas.
+Sistema em PostgreSQL para gerar automaticamente um boletim sobre fusos horarios (UTCs), incluindo previsao do tempo, curiosidades e materiais de apoio.
 
-## ⚙️ Tecnologias
+## Tecnologias
 
 * PostgreSQL
 * PL/pgSQL
-* PL/Python3u (`plpython3u`)
-* pgAgent (agendamento de jobs)
-* API OpenWeatherMap (consumida via `urllib` no PL/Python3)
-* smtplib (envio de email via PL/Python3)
+* PL/Python3u
+* pgAgent
+* Python 3
+* psycopg2
+* smtplib
 
-## 🚀 Funcionalidades
+## Funcionalidades
 
-* Consumo de API de clima diretamente no banco via PL/Python3
-* Triggers para geração de logs
-* Jobs automáticos agendados com pgAgent
-* Geração de relatórios em HTML
-* Envio automático de emails via SMTP
+* Coleta automatica de clima diretamente no banco
+* Trigger com `NOTIFY` para disparar o envio de email
+* Listener Python recebendo notificacoes do PostgreSQL
+* Geracao de relatorio HTML
+* Logs de execucao e falhas
 
-## 🧠 Arquitetura
-
-```
-API OpenWeather → plpython3u (atualizar_clima)
-                       ↓
-               PostgreSQL / previsao_tempo
-                       ↓
-                Trigger → Logs
-                       ↓
-          pgAgent (07h) ──→ atualizar_clima()
-          pgAgent (08h) ──→ enviar_emails()  → SMTP → Membros
-```
-
-## ▶️ Como executar
-
-### Pré-requisitos
-
-1. PostgreSQL com `plpython3u` habilitado (requer Python 3 linkado ao pg)
-2. **pgAgent** instalado e o serviço `pgagent` em execução no servidor
-   * No pgAdmin: *Tools → pgAgent Jobs* ou instale via pacote do sistema
-3. Credenciais SMTP configuradas em `email.sql` e chave OpenWeather em `api.sql`
-
-### Ordem de execução dos scripts
+## Arquitetura
 
 ```
-01  schema.sql
-02  extensions.sql
-03  tables.sql
-04  data.sql
-05  triggers.sql
-06  api.sql
-07  email.sql
-08  jobs.sql        ← requer pgAgent instalado
+API de clima -> plpython3u (atualizar_clima)
+                     |
+                     v
+              previsao_tempo
+                     |
+                     v
+          Trigger -> NOTIFY (utc_news_email)
+                     |
+                     v
+         Python LISTEN -> SMTP -> Membros
+
+pgAgent (07h) -> atualizar_clima()
 ```
 
-## 👥 Integrantes
+## Como executar
 
-* João Honorio Barbosa Vieira de Assis
+### Pre-requisitos
+
+1. PostgreSQL com `plpython3u` habilitado
+2. pgAgent instalado e em execucao
+3. Python 3 com dependencias instaladas via `pip install -r requirements.txt`
+4. Variaveis de ambiente configuradas para o listener:
+   * `UTC_NEWS_DSN`
+   * `UTC_NEWS_SMTP_HOST`
+   * `UTC_NEWS_SMTP_PORT`
+   * `UTC_NEWS_SMTP_USER`
+   * `UTC_NEWS_SMTP_PASS`
+   * `UTC_NEWS_SMTP_FROM`
+
+### Ordem dos scripts SQL
+
+```
+01 schema.sql
+02 extensions.sql
+03 tables.sql
+04 data.sql
+05 triggers.sql
+06 api.sql
+07 email.sql
+08 jobs.sql
+```
+
+### Execucao
+
+1. Rode os scripts SQL na ordem acima.
+2. Inicie o listener Python:
+
+```bash
+python scripts/notify_email.py
+```
+
+3. Deixe o listener em execucao.
+4. O pgAgent executa `atualizar_clima()` no horario programado.
+5. As triggers em `previsao_tempo` disparam `NOTIFY`.
+6. O listener Python recebe o evento e envia o email.
+
+## Integrantes
+
+* Joao Honorio Barbosa Vieira de Assis
 * Bruno Santos Moraes
 
-## 📹 Vídeo
+## Video
 
 (Link do YouTube aqui)
